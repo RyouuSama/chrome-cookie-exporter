@@ -9,7 +9,7 @@ This project is a simple Chrome extension that exports cookies when you visit a 
 1. Clone this repository or download the ZIP file and extract it.
 
 ```
-git clone https://github.com/yourusername/cookie-exporter.git
+git clone https://github.com/RyouuSama/cookie-exporter.git
 ```
 
 2. Open Chrome and go to `chrome://extensions/`.

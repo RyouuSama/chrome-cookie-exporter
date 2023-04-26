@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+  "name": "Cookie Exporter",
+  "version": "1.0",
+  "description": "Exports cookies when entering a website",
+  "permissions": [
+    "cookies",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "icons": {
+    "48": "icon.png"
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  }
+}

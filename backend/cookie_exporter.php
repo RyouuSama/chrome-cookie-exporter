@@ -67,18 +67,22 @@ error_reporting(E_ALL);
 
 try {
     $data = json_decode(file_get_contents('php://input'), true);
+    $message = 'Invalid data received';
 
-    if (isset($data['cookies']) && is_array($data['cookies'])) {
-        $cookiesRepository = new CookiesRepository();
-        $cookieExporter = new CookieExporter($cookiesRepository);
-        $cookieExporter->exportCookies($data['cookies']);
+    http_response_code(
+        match (true) {
+            isset($data['cookies']) && is_array($data['cookies']) => {
+                $cookiesRepository = new CookiesRepository();
+                $cookieExporter = new CookieExporter($cookiesRepository);
+                $cookieExporter->exportCookies($data['cookies']);
+                $message = 'Cookies exported successfully';
+                200;
+            },
+            default => 400,
+        }
+    );
 
-        http_response_code(200);
-        echo json_encode(['message' => 'Cookies exported successfully']);
-    } else {
-        http_response_code(400);
-        echo json_encode(['message' => 'Invalid data received']);
-    }
+    echo json_encode(['message' => $message]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['message' => $e->getMessage()]);

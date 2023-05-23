@@ -13,44 +13,73 @@ header('Access-Control-Allow-Headers: Content-Type');
  */
 class CookieExporter
 {
+    private $cookiesRepository;
+
     /**
      * Constructor.
+     *
+     * @param CookiesRepository $cookiesRepository Repository for saving cookies.
      */
-    public function __construct()
+    public function __construct(CookiesRepository $cookiesRepository)
     {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (isset($data['cookies'])) {
-            $result = $this->processCookies($data['cookies']);
-
-            if ($result) {
-                http_response_code(200);
-                echo json_encode(['message' => 'Cookies exported successfully']);
-            } else {
-                http_response_code(500);
-                echo json_encode(['message' => 'Error exporting cookies']);
-            }
-        }
+        $this->cookiesRepository = $cookiesRepository;
     }
 
     /**
-     * Processes the received cookies.
+     * Exports the received cookies.
      *
      * @param array $cookies Array of cookies.
-     * @return bool Returns true if the cookies were processed successfully, false otherwise.
+     * @throws RuntimeException If there was an error exporting the cookies.
      */
-    private function processCookies(array $cookies): bool
+    public function exportCookies(array $cookies): void
+    {
+        $this->cookiesRepository->saveCookies($cookies);
+    }
+}
+
+/**
+ * Class CookiesRepository
+ *
+ * Repository for saving cookies.
+ */
+class CookiesRepository
+{
+    /**
+     * Saves the cookies to a JSON file.
+     *
+     * @param array $cookies Array of cookies.
+     * @throws RuntimeException If there was an error saving the cookies.
+     */
+    public function saveCookies(array $cookies): void
     {
         $cookiesFile = 'cookies.json';
 
-        // Save the cookies to a JSON file
-        if (file_put_contents($cookiesFile, json_encode($cookies))) {
-            return true;
-        } else {
-            return false;
+        if (!file_put_contents($cookiesFile, json_encode($cookies))) {
+            throw new RuntimeException('Error exporting cookies');
         }
     }
 }
 
-// Initialize the CookieExporter class
-new CookieExporter();
+// Enable error reporting for debugging purposes
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+try {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (isset($data['cookies']) && is_array($data['cookies'])) {
+        $cookiesRepository = new CookiesRepository();
+        $cookieExporter = new CookieExporter($cookiesRepository);
+        $cookieExporter->exportCookies($data['cookies']);
+
+        http_response_code(200);
+        echo json_encode(['message' => 'Cookies exported successfully']);
+    } else {
+        http_response_code(400);
+        echo json_encode(['message' => 'Invalid data received']);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['message' => $e->getMessage()]);
+}
